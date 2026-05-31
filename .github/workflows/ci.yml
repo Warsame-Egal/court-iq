@@ -85,4 +85,4 @@ jobs:
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             "${VM_USER}@${VM_HOST}" \
-            "bash ~/court-iq/scripts/deploy.sh"
+            'cd ~/court-iq && git fetch origin main && git reset --hard origin/main && bash scripts/deploy.sh'
