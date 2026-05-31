@@ -6,6 +6,14 @@ NBA live scores, stats, and standings. **React → Spring → FastAPI → [`nba_
 
 ![Demo](docs/demo.gif)
 
+## Architecture
+
+CourtIQ uses **Spring Boot (Java)** as the public REST API and **FastAPI (Python)** to call [swar/nba_api](https://github.com/swar/nba_api), which is Python-only. The FastAPI service is a thin wrapper around that library — not a replacement for it.
+
+**React** → **Spring** (REST, caching) → **FastAPI** (`nba_api`, live polling, WebSockets) → NBA.com
+
+The browser talks to Spring. Spring forwards requests to FastAPI for NBA data. No database.
+
 ## Docker
 
 ```bash
@@ -56,8 +64,6 @@ uvicorn app.main:app --reload
 - Docs: http://localhost:8000/docs
 - Routes: [`nba-api/API.md`](nba-api/API.md)
 
-Wraps [swar/nba_api](https://github.com/swar/nba_api) (polling, WebSockets, proxy support).
-
 ## React
 
 ```bash
@@ -70,7 +76,7 @@ http://localhost:3000 — proxies `/api` to Spring when `VITE_API_BASE_URL` is u
 
 ## Config
 
-Copy [`.env.example`](.env.example). Main vars: `FASTAPI_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `ALLOWED_ORIGINS`, `VITE_API_BASE_URL`, `VITE_WS_URL`, `NBA_API_PROXY`.
+Copy [`.env.example`](.env.example). Main vars: `FASTAPI_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `ALLOWED_ORIGINS`, `VITE_API_BASE_URL`, `VITE_WS_URL`.
 
 ## Credits
 

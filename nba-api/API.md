@@ -1,6 +1,6 @@
 # CourtIQ FastAPI — internal data service
 
-FastAPI wrapper around [`swar/nba_api`](https://github.com/swar/nba_api). No database. Spring Boot proxies these REST routes; React uses WebSockets here for live scoreboard and play-by-play. CourtIQ adds rate limiting, proxy rotation, caching, and HTTP/WebSocket routes on top of that client — it does not replace it.
+FastAPI wrapper around [`swar/nba_api`](https://github.com/swar/nba_api). No database. Spring Boot proxies these REST routes; React uses WebSockets here for live scoreboard and play-by-play. CourtIQ adds rate limiting, caching, and HTTP/WebSocket routes on top of that client — it does not replace it.
 
 Base URL (local): `http://localhost:8000`
 
@@ -42,7 +42,3 @@ Background polling for today’s scoreboard and in-progress play-by-play. Box sc
 | Method | Path | Notes |
 |--------|------|--------|
 | GET | `/api/v1/health` | Polling status, `live_cache`, WebSocket counts |
-
-## Cloud / proxy
-
-Set `NBA_API_PROXY` (comma-separated URLs) so Docker can run `patch_http.py` on startup. Cloud hosts often need this because NBA.com blocks datacenter IPs; the upstream client is [swar/nba_api](https://github.com/swar/nba_api). See root `.env.example`.
