@@ -1,0 +1,182 @@
+// Top navigation bar.
+import { useState } from 'react';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
+import {
+  AppBar,
+  Toolbar,
+  Button,
+  Box,
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+} from '@mui/material';
+import { LightMode, DarkMode, Search, ExpandMore } from '@mui/icons-material';
+import { useThemeMode } from '../contexts/ThemeContext';
+import { useSearchOverlay } from '../contexts/SearchOverlayContext';
+
+const mainNav = [{ label: 'Scores', path: '/' }];
+
+const exploreItems = [
+  { label: 'Standings', path: '/standings' },
+  { label: 'Teams', path: '/teams' },
+  { label: 'Players', path: '/players' },
+];
+
+export default function Navbar() {
+  const location = useLocation();
+  const { mode, toggleColorMode } = useThemeMode();
+  const { openSearch } = useSearchOverlay();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const isActive = (path: string) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
+  };
+
+  return (
+    <AppBar
+      position="sticky"
+      elevation={0}
+      sx={{
+        backgroundColor: 'background.paper',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+      }}
+    >
+      <Toolbar
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          px: { xs: 2, sm: 3, md: 4 },
+          minHeight: 56,
+          height: 56,
+          gap: 2,
+        }}
+      >
+        <Typography
+          variant="h6"
+          component={RouterLink}
+          to="/"
+          sx={{
+            fontFamily: '"Barlow Condensed", sans-serif',
+            fontWeight: 700,
+            fontSize: '1.25rem',
+            letterSpacing: '0.02em',
+            color: 'text.primary',
+            textDecoration: 'none',
+            '&:hover': { color: 'primary.main' },
+            transition: 'all 0.2s ease',
+          }}
+        >
+          CourtIQ
+        </Typography>
+
+        {/* Desktop: Scores, Explore */}
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>
+          {mainNav.map(item => (
+            <Button
+              key={item.path}
+              component={RouterLink}
+              to={item.path}
+              sx={{
+                color: isActive(item.path) ? 'primary.main' : 'text.secondary',
+                fontWeight: isActive(item.path)
+                  ? 600
+                  : 500,
+                fontSize: '0.72rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                px: 2,
+                py: 1,
+                borderRadius: 0,
+                borderBottom: '2px solid',
+                borderBottomColor: isActive(item.path) ? 'primary.main' : 'transparent',
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  color: 'primary.main',
+                  borderBottomColor: 'primary.main',
+                },
+              }}
+            >
+              {item.label}
+            </Button>
+          ))}
+          <Button
+            onClick={e => setAnchorEl(e.currentTarget)}
+            endIcon={<ExpandMore />}
+            sx={{
+              color:
+                location.pathname.startsWith('/standings') ||
+                location.pathname.startsWith('/teams') ||
+                location.pathname.startsWith('/players')
+                  ? 'primary.main'
+                  : 'text.secondary',
+              fontWeight: 500,
+              fontSize: '0.72rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              px: 2,
+              py: 1,
+              borderBottom: '2px solid',
+              borderBottomColor: 'transparent',
+              '&:hover': {
+                backgroundColor: 'transparent',
+                color: 'primary.main',
+              },
+            }}
+          >
+            Explore
+          </Button>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={() => setAnchorEl(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+            PaperProps={{
+              sx: {
+                backgroundColor: 'background.paper',
+                borderRadius: 1,
+                p: 0.5,
+              },
+            }}
+          >
+            {exploreItems.map(item => (
+              <MenuItem
+                key={item.path}
+                component={RouterLink}
+                to={item.path}
+                onClick={() => setAnchorEl(null)}
+              >
+                {item.label}
+              </MenuItem>
+            ))}
+          </Menu>
+        </Box>
+
+        {/* Search icon + theme toggle */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <IconButton onClick={openSearch} aria-label="open search" size="medium" sx={{ color: 'text.primary' }}>
+            <Search />
+          </IconButton>
+          <IconButton
+            onClick={toggleColorMode}
+            aria-label="toggle theme"
+            size="medium"
+            sx={{
+              display: { xs: 'none', md: 'flex' },
+              color: 'text.secondary',
+              '&:hover': { color: 'text.primary' },
+            }}
+          >
+            {mode === 'dark' ? <LightMode /> : <DarkMode />}
+          </IconButton>
+        </Box>
+      </Toolbar>
+    </AppBar>
+  );
+}

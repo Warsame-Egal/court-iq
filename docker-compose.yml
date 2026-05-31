@@ -1,0 +1,57 @@
+services:
+  fastapi:
+    build: ./nba-api
+    container_name: courtiq-data
+    ports:
+      - "8000:8000"
+    environment:
+      - NBA_API_PROXY=${NBA_API_PROXY:-}
+      - NBA_API_CONFIG=${NBA_API_CONFIG:-}
+      - ALLOWED_ORIGINS=http://springboot:8080
+    networks:
+      - courtiq-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  springboot:
+    build: .
+    container_name: courtiq-api
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - FASTAPI_BASE_URL=fastapi:8000
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000
+    depends_on:
+      fastapi:
+        condition: service_healthy
+    networks:
+      - courtiq-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:8080
+        VITE_WS_URL: localhost:8000
+    container_name: courtiq-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      springboot:
+        condition: service_healthy
+    networks:
+      - courtiq-network
+
+networks:
+  courtiq-network:
+    driver: bridge

@@ -1,0 +1,6 @@
+# One-line subject (~50 chars), imperative mood. Blank line, then optional body (why, not what).
+#
+# Examples:
+# fix: drop credentialed CORS on FastAPI
+# ci: run pytest, vitest, and maven on push
+#

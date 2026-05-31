@@ -1,0 +1,244 @@
+# CourtIQ — production runbook
+
+Copy once: `cp DEPLOY.local.md.example DEPLOY.local.md`  
+`DEPLOY.local.md` is gitignored (your URLs stay private).
+
+---
+
+# FIRST-TIME SETUP
+
+## 1. GCP VM
+
+1. [GCP Console](https://console.cloud.google.com/) → Compute Engine → **Create instance**
+2. **Name:** `courtiq-instance` · **Machine:** e2-micro · **Region:** `us-central1`
+3. **Boot disk:** Ubuntu 22.04, 30 GB
+4. **Network tags:** `courtiq` → Create
+
+**Firewall** (once):
+
+```bash
+gcloud compute firewall-rules create courtiq-api \
+  --allow=tcp:8080,tcp:8000 \
+  --target-tags=courtiq
+```
+
+**VM external IP** → GCP → VM instances → **External IP** (for SSH + GitHub `VM_HOST`).
+
+---
+
+## 2. VM — Docker + backend
+
+SSH in: `ssh YOUR_USER@YOUR_VM_IP`
+
+```bash
+sudo apt-get update
+sudo apt-get install -y docker.io docker-compose-v2 git curl
+
+# 1 GB RAM — add swap before first build
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+
+sudo usermod -aG docker "$USER"
+# log out and SSH back in
+
+git clone https://github.com/Warsame-Egal/court-iq.git
+cd court-iq
+cp .env.production.example .env
+```
+
+Edit `.env` after tunnels (step 3). For now, build:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Check (~2 min on e2-micro):
+
+```bash
+curl -s http://localhost:8080/actuator/health
+curl -s http://localhost:8000/api/v1/health
+```
+
+---
+
+## 3. Cloudflare tunnels — background (`nohup`)
+
+Install [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) on the VM.
+
+**Start both tunnels** (survives SSH logout):
+
+```bash
+pkill cloudflared 2>/dev/null || true
+
+nohup cloudflared tunnel --url http://localhost:8080 > ~/cf-spring.log 2>&1 &
+nohup cloudflared tunnel --url http://localhost:8000 > ~/cf-fastapi.log 2>&1 &
+```
+
+**Get URLs** (~10 sec):
+
+```bash
+grep -o 'https://[^ ]*trycloudflare.com' ~/cf-spring.log    # Spring → .env + Vercel API
+grep -o 'https://[^ ]*trycloudflare.com' ~/cf-fastapi.log   # FastAPI → Vercel WS host only
+pgrep -a cloudflared   # should show 2 processes
+```
+
+| Tunnel | Port | Goes where |
+|--------|------|------------|
+| `cf-spring.log` | 8080 | VM `.env` → `SERVER_URL` (full `https://…`) |
+| `cf-fastapi.log` | 8000 | Vercel → `VITE_WS_URL` (**hostname only**, no `https://`) |
+
+**Update VM `.env`:**
+
+```bash
+nano ~/court-iq/.env
+```
+
+```env
+SERVER_URL=https://YOUR-SPRING-TUNNEL.trycloudflare.com
+CORS_ALLOWED_ORIGINS=https://court-iq-alpha.vercel.app
+ALLOWED_ORIGINS=https://court-iq-alpha.vercel.app
+NBA_API_PROXY=http://USER:PASS@HOST:PORT
+```
+
+No `FASTAPI_BASE_URL` line.
+
+```bash
+cd ~/court-iq
+docker compose -f docker-compose.prod.yml up -d springboot
+```
+
+**Test from Windows CMD** (not from inside the VM):
+
+```cmd
+curl.exe "https://YOUR-SPRING-TUNNEL.trycloudflare.com/actuator/health"
+```
+
+---
+
+## 4. Vercel frontend
+
+1. [vercel.com](https://vercel.com) → Import repo → **Root Directory:** `frontend`
+2. **Settings → Environment Variables** (Production):
+
+| Name | Value |
+|------|--------|
+| `VITE_API_BASE_URL` | Same as `SERVER_URL` |
+| `VITE_WS_URL` | FastAPI tunnel hostname only (e.g. `something.trycloudflare.com`) |
+
+3. Deploy → https://court-iq-alpha.vercel.app
+
+---
+
+## 5. GitHub Actions auto-deploy (Windows CMD, one-time)
+
+Repo → **Settings → Secrets and variables → Actions → Repository secrets**
+
+### A. Create deploy key (any folder in CMD)
+
+```cmd
+ssh-keygen -t ed25519 -f C:\Users\Warsa\courtiq-deploy -N ""
+```
+
+### B. Public key → VM
+
+```cmd
+type C:\Users\Warsa\courtiq-deploy.pub
+```
+
+Copy the one line → on VM:
+
+```bash
+nano ~/.ssh/authorized_keys
+# paste line at end, save
+chmod 600 ~/.ssh/authorized_keys
+```
+
+### C. Three GitHub secrets
+
+| Secret name | How to get value | Example |
+|-------------|------------------|---------|
+| `VM_HOST` | GCP → VM **External IP** or on VM: `curl -s ifconfig.me` | `35.238.67.7` |
+| `VM_USER` | On VM: `whoami` or name before `@` when you SSH | `warsameegal0` |
+| `VM_SSH_KEY` | **Private** key — CMD: `notepad C:\Users\Warsa\courtiq-deploy` → Ctrl+A, Ctrl+C. Must include `-----BEGIN` through `-----END`. **Not** the `.pub` file. | (multiline key) |
+
+**Verify key file (CMD):**
+
+```cmd
+ssh-keygen -y -f C:\Users\Warsa\courtiq-deploy
+type C:\Users\Warsa\courtiq-deploy.pub
+```
+
+First command should print `ssh-ed25519 …`. Second is **public only** (for VM, not GitHub).
+
+**Test SSH (CMD):**
+
+```cmd
+ssh -i C:\Users\Warsa\courtiq-deploy warsameegal0@35.238.67.7 "echo ok"
+```
+
+Must print `ok`. Then **Actions → CI → Re-run** or push to `main`.
+
+---
+
+# EVERY DAY — SHIP CODE
+
+On your laptop:
+
+```cmd
+git add .
+git commit -m "your message"
+git push
+```
+
+| What | What happens |
+|------|----------------|
+| **Vercel** | Auto-builds frontend on every `main` push |
+| **GCP VM** | CI tests pass → SSH runs `scripts/deploy.sh` when backend files changed |
+| **You** | Nothing else unless tunnels died or you changed `.env` |
+
+Optional manual deploy on VM: `bash ~/court-iq/scripts/deploy.sh`
+
+---
+
+# WHEN TUNNELS RESTART (VM reboot, `pkill`, etc.)
+
+Quick tunnels get **new URLs** each time. Same `nohup` commands:
+
+```bash
+pkill cloudflared 2>/dev/null || true
+nohup cloudflared tunnel --url http://localhost:8080 > ~/cf-spring.log 2>&1 &
+nohup cloudflared tunnel --url http://localhost:8000 > ~/cf-fastapi.log 2>&1 &
+grep -o 'https://[^ ]*trycloudflare.com' ~/cf-spring.log
+grep -o 'https://[^ ]*trycloudflare.com' ~/cf-fastapi.log
+```
+
+1. Update `SERVER_URL` in `~/court-iq/.env`
+2. `docker compose -f docker-compose.prod.yml up -d springboot`
+3. Vercel → update `VITE_API_BASE_URL` + `VITE_WS_URL` → **Redeploy**
+4. Update the table below in `DEPLOY.local.md`
+
+**Logs:** `tail -f ~/cf-spring.log` · **Stop tunnels:** `pkill cloudflared`
+
+---
+
+# MY URLS (update when tunnels change)
+
+| What | Value |
+|------|--------|
+| VM IP (`VM_HOST`) | |
+| VM user (`VM_USER`) | |
+| Spring tunnel (`SERVER_URL` / `VITE_API_BASE_URL`) | `https://` |
+| FastAPI WS host (`VITE_WS_URL`, no https) | |
+| Vercel app | `https://court-iq-alpha.vercel.app` |
+
+---
+
+# QUICK CHECKS
+
+| Check | Command |
+|-------|---------|
+| Tunnels running | `pgrep -a cloudflared` (2 lines) |
+| Spring on VM | `curl -s http://localhost:8080/actuator/health` |
+| FastAPI on VM | `curl -s http://localhost:8000/api/v1/health` |
+| Spring via tunnel | `curl.exe https://YOUR-SPRING-TUNNEL.../actuator/health` (Windows) |
+| GitHub deploy | Actions → CI → **deploy** step green |

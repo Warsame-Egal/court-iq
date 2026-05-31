@@ -1,0 +1,38 @@
+# Maven build output
+target/
+*.class
+*.jar
+*.war
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Env files — examples are committed, actual .env files are not
+.env
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Build output — never commit
+frontend/dist/
+dist/
+
+TODO/
+nba-live-tracker-main/
+
+# Personal production runbook (URLs, proxy, etc.)
+DEPLOY.local.md
