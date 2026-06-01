@@ -2,6 +2,7 @@ package com.courtiq.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -17,30 +18,41 @@ final class PaginationSupport {
 
     private PaginationSupport() {}
 
-    static MultiValueMap<String, String> queryParams(int page, int pageSize, MultiValueMap<String, String> extra) {
+    static MultiValueMap<String, String> forwardQuery(MultiValueMap<String, String> extra) {
         LinkedMultiValueMap<String, String> query = new LinkedMultiValueMap<>();
-        if (extra != null) {
-            query.addAll(extra);
+        if (extra == null) {
+            return query;
         }
-        query.set("page", String.valueOf(page));
-        query.set("limit", String.valueOf(pageSize));
+        extra.forEach((name, values) -> {
+            if (!"page".equals(name) && !"pageSize".equals(name) && !"limit".equals(name)) {
+                query.addAll(name, values);
+            }
+        });
         return query;
     }
 
-    static Mono<String> normalizeEnvelope(Mono<String> upstream) {
-        return upstream.map(PaginationSupport::normalizeEnvelope);
+    static Mono<String> paginate(Mono<String> upstreamArray, int page, int pageSize) {
+        return upstreamArray.map(json -> paginate(json, page, pageSize));
     }
 
-    static String normalizeEnvelope(String json) {
+    static String paginate(String json, int page, int pageSize) {
         try {
-            JsonNode root = MAPPER.readTree(json);
-            if (!root.isObject() || !root.has("data") || !root.has("limit")) {
+            JsonNode arr = MAPPER.readTree(json);
+            if (!arr.isArray()) {
                 return json;
             }
-            ObjectNode out = (ObjectNode) root.deepCopy();
-            out.put("pageSize", root.get("limit").asInt());
-            out.remove("limit");
-            out.remove("has_more");
+            int total = arr.size();
+            int from = Math.min((page - 1) * pageSize, total);
+            int to = Math.min(from + pageSize, total);
+            ArrayNode slice = MAPPER.createArrayNode();
+            for (int i = from; i < to; i++) {
+                slice.add(arr.get(i));
+            }
+            ObjectNode out = MAPPER.createObjectNode();
+            out.set("data", slice);
+            out.put("page", page);
+            out.put("pageSize", pageSize);
+            out.put("total", total);
             return MAPPER.writeValueAsString(out);
         } catch (Exception e) {
             return json;

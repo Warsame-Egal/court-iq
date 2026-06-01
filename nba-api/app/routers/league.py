@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -14,19 +13,14 @@ router = APIRouter()
 
 @router.get("/league/leaders", response_model=LeagueLeadersResponse, tags=["league"])
 async def get_league_leaders_endpoint(
-    stat_category: str = Query("PTS"),
-    season: Optional[str] = Query(None),
+    stat_category: str = Query(...),
+    season: str = Query(...),
 ):
     try:
         leaders_data = await get_league_leaders(
             stat_category=stat_category, season=season, top_n=5
         )
         leaders = [LeagueLeader(**leader_dict) for leader_dict in leaders_data]
-
-        if season is None:
-            from app.utils.season import get_current_season
-
-            season = get_current_season()
 
         return LeagueLeadersResponse(
             category=stat_category.upper(), season=season, leaders=leaders

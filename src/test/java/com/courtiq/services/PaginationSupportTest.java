@@ -8,19 +8,22 @@ import org.springframework.util.LinkedMultiValueMap;
 class PaginationSupportTest {
 
     @Test
-    void normalizeEnvelope_mapsLimitToPageSize() {
-        String in = "{\"data\":[],\"page\":1,\"limit\":20,\"total\":30,\"has_more\":true}";
-        String out = PaginationSupport.normalizeEnvelope(in);
-        assertThat(out).contains("\"pageSize\":20").doesNotContain("\"limit\"").doesNotContain("has_more");
+    void paginate_slicesArrayIntoEnvelope() {
+        String in = "[{\"id\":1},{\"id\":2},{\"id\":3},{\"id\":4},{\"id\":5}]";
+        String out = PaginationSupport.paginate(in, 2, 2);
+        assertThat(out).contains("\"page\":2").contains("\"pageSize\":2").contains("\"total\":5");
+        assertThat(out).contains("\"data\":[{\"id\":3},{\"id\":4}]");
     }
 
     @Test
-    void queryParams_setsPageAndLimit() {
+    void forwardQuery_stripsPaginationAndKeepsFilters() {
         var extra = new LinkedMultiValueMap<String, String>();
         extra.add("season", "2023-24");
-        var q = PaginationSupport.queryParams(2, 10, extra);
-        assertThat(q.getFirst("page")).isEqualTo("2");
-        assertThat(q.getFirst("limit")).isEqualTo("10");
+        extra.add("page", "2");
+        extra.add("limit", "10");
+        var q = PaginationSupport.forwardQuery(extra);
         assertThat(q.getFirst("season")).isEqualTo("2023-24");
+        assertThat(q.getFirst("page")).isNull();
+        assertThat(q.getFirst("limit")).isNull();
     }
 }

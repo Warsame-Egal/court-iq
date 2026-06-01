@@ -1,8 +1,9 @@
 package com.courtiq.services;
 
 import static com.courtiq.config.CacheConfig.PLAYERS;
-import static com.courtiq.services.PaginationSupport.normalizeEnvelope;
-import static com.courtiq.services.PaginationSupport.queryParams;
+import static com.courtiq.services.PaginationSupport.forwardQuery;
+import static com.courtiq.services.PaginationSupport.paginate;
+import static com.courtiq.services.SeasonUtil.queryWithSeason;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -24,22 +25,29 @@ public class PlayerService {
         return ProxySupport.get(webClient, "/api/v1/player/{playerId}", playerId);
     }
 
-    public Mono<String> getGameLog(String playerId, MultiValueMap<String, String> query) {
-        return ProxySupport.getWithQuery(webClient, "/api/v1/player/{playerId}/game-log", query, playerId);
+    public Mono<String> getGameLog(String playerId, String season) {
+        return ProxySupport.getWithQuery(
+                webClient, "/api/v1/player/{playerId}/game-log", queryWithSeason(season), playerId);
     }
 
     public Mono<String> searchPlayers(
             String searchTerm, int page, int pageSize, MultiValueMap<String, String> extraQuery) {
-        return normalizeEnvelope(ProxySupport.getWithQuery(
-                webClient,
-                "/api/v1/players/search/{searchTerm}",
-                queryParams(page, pageSize, extraQuery),
-                searchTerm));
+        return paginate(
+                ProxySupport.getWithQuery(
+                        webClient,
+                        "/api/v1/players/search/{searchTerm}",
+                        forwardQuery(extraQuery),
+                        searchTerm),
+                page,
+                pageSize);
     }
 
-    public Mono<String> getSeasonLeaders(int page, int pageSize, MultiValueMap<String, String> extraQuery) {
-        return normalizeEnvelope(ProxySupport.getWithQuery(
-                webClient, "/api/v1/players/season-leaders", queryParams(page, pageSize, extraQuery)));
+    public Mono<String> getSeasonLeaders(int page, int pageSize, String season) {
+        return paginate(
+                ProxySupport.getWithQuery(
+                        webClient, "/api/v1/players/season-leaders", queryWithSeason(season)),
+                page,
+                pageSize);
     }
 
     @Cacheable(value = PLAYERS, key = "'roster'")

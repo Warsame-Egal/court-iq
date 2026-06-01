@@ -2,7 +2,6 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.schemas.pagination import PaginatedResponse, PaginationParams
 from app.schemas.player import PlayerSummary
 from app.schemas.playergamelog import PlayerGameLogResponse
 from app.schemas.seasonleaders import SeasonLeadersCategory
@@ -14,7 +13,6 @@ from app.services.players import (
     search_players,
 )
 from app.utils.errors import upstream_error
-from app.utils.season import get_current_season, validate_season
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -33,57 +31,25 @@ async def fetch_player(player_id: str):
 
 @router.get(
     "/players/search/{search_term}",
-    response_model=PaginatedResponse[PlayerSummary],
+    response_model=list[PlayerSummary],
     tags=["players"],
 )
-async def search_players_route(
-    search_term: str,
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
-):
+async def search_players_route(search_term: str):
     try:
-        full = await search_players(search_term)
-        params = PaginationParams(page=page, limit=limit)
-        total = len(full)
-        data = full[params.offset : params.offset + params.limit]
-        return PaginatedResponse(
-            data=data,
-            page=params.page,
-            limit=params.limit,
-            total=total,
-            has_more=params.offset + len(data) < total,
-        )
+        return await search_players(search_term)
     except HTTPException:
         raise
 
 
 @router.get(
     "/players/season-leaders",
-    response_model=PaginatedResponse[SeasonLeadersCategory],
+    response_model=list[SeasonLeadersCategory],
     tags=["players"],
 )
-async def get_season_leaders_route(
-    season: str = Query(default_factory=get_current_season),
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
-):
-    try:
-        validate_season(season)
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+async def get_season_leaders_route(season: str = Query(...)):
     try:
         resp = await get_season_leaders(season)
-        params = PaginationParams(page=page, limit=limit)
-        categories = resp.categories
-        total = len(categories)
-        data = categories[params.offset : params.offset + params.limit]
-        return PaginatedResponse(
-            data=data,
-            page=params.page,
-            limit=params.limit,
-            total=total,
-            has_more=params.offset + len(data) < total,
-        )
+        return resp.categories
     except HTTPException:
         raise
     except Exception as e:
@@ -96,14 +62,7 @@ async def get_season_leaders_route(
     response_model=PlayerGameLogResponse,
     tags=["players"],
 )
-async def get_player_game_log_route(
-    player_id: str,
-    season: str = Query(default_factory=get_current_season),
-):
-    try:
-        validate_season(season)
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+async def get_player_game_log_route(player_id: str, season: str = Query(...)):
     try:
         return await get_player_game_log(player_id, season)
     except HTTPException:

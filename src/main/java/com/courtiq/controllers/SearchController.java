@@ -7,7 +7,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.util.MultiValueMap;
+import jakarta.validation.constraints.NotBlank;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 @Tag(name = "Search", description = "Cross-entity search for players and teams")
+@Validated
 @RestController
 @RequestMapping("/api/v1")
 public class SearchController {
@@ -35,11 +37,10 @@ public class SearchController {
     @StandardApiResponses
     @GetMapping("/search")
     public Mono<String> search(
-            @Parameter(
-                            description = "Query params forwarded to FastAPI (must include `q`)",
-                            example = "q=lebron")
+            @Parameter(description = "Search text", example = "lebron")
                     @RequestParam
-                    MultiValueMap<String, String> params) {
-        return searchService.search(params);
+                    @NotBlank(message = "Search query must not be empty")
+                    String q) {
+        return searchService.search(q);
     }
 }

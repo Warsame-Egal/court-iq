@@ -7,7 +7,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.util.MultiValueMap;
+import jakarta.validation.constraints.Pattern;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 @Tag(name = "League", description = "League-wide leaderboards and aggregates")
+@Validated
 @RestController
 @RequestMapping("/api/v1/league")
 public class LeagueController {
@@ -36,11 +38,13 @@ public class LeagueController {
     @StandardApiResponses
     @GetMapping("/leaders")
     public Mono<String> getLeaders(
-            @Parameter(
-                            description = "Query params forwarded to FastAPI",
-                            example = "stat_category=PTS&season=2023-24")
-                    @RequestParam
-                    MultiValueMap<String, String> params) {
-        return leagueService.getLeaders(params);
+            @Parameter(description = "Stat category", example = "PTS")
+                    @RequestParam(required = false, defaultValue = "PTS")
+                    String statCategory,
+            @Parameter(description = "NBA season", example = "2023-24")
+                    @RequestParam(required = false)
+                    @Pattern(regexp = "\\d{4}-\\d{2}", message = "Season must be YYYY-YY")
+                    String season) {
+        return leagueService.getLeaders(statCategory, season);
     }
 }

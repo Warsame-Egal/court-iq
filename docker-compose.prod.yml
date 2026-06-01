@@ -7,12 +7,9 @@ services:
     build: ./nba-api
     container_name: courtiq-data
     restart: unless-stopped
-    ports:
-      - "8000:8000"
     env_file: .env
     environment:
       NBA_API_PROXY: ${NBA_API_PROXY:-}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     networks:
       - courtiq-network
     healthcheck:

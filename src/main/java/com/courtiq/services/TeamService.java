@@ -1,10 +1,10 @@
 package com.courtiq.services;
 
 import static com.courtiq.config.CacheConfig.TEAMS;
+import static com.courtiq.services.SeasonUtil.queryWithSeason;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -17,8 +17,8 @@ public class TeamService {
         this.webClient = webClient;
     }
 
-    public Mono<String> getStats(MultiValueMap<String, String> query) {
-        return ProxySupport.getWithQuery(webClient, "/api/v1/teams/stats", query);
+    public Mono<String> getStats(String season) {
+        return ProxySupport.getWithQuery(webClient, "/api/v1/teams/stats", queryWithSeason(season));
     }
 
     @Cacheable(value = TEAMS, key = "#teamId")
@@ -26,11 +26,13 @@ public class TeamService {
         return ProxySupport.get(webClient, "/api/v1/teams/{teamId}", teamId);
     }
 
-    public Mono<String> getGameLog(String teamId, MultiValueMap<String, String> query) {
-        return ProxySupport.getWithQuery(webClient, "/api/v1/teams/{teamId}/game-log", query, teamId);
+    public Mono<String> getGameLog(String teamId, String season) {
+        return ProxySupport.getWithQuery(
+                webClient, "/api/v1/teams/{teamId}/game-log", queryWithSeason(season), teamId);
     }
 
-    public Mono<String> getPlayerStats(String teamId, MultiValueMap<String, String> query) {
-        return ProxySupport.getWithQuery(webClient, "/api/v1/teams/{teamId}/player-stats", query, teamId);
+    public Mono<String> getPlayerStats(String teamId, String season) {
+        return ProxySupport.getWithQuery(
+                webClient, "/api/v1/teams/{teamId}/player-stats", queryWithSeason(season), teamId);
     }
 }

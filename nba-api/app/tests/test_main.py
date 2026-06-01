@@ -91,11 +91,9 @@ def test_search_players_success(mock_search):
     response = client.get("/api/v1/players/search/lebron")
     assert response.status_code == 200
     data = response.json()
-    assert "data" in data
-    assert isinstance(data["data"], list)
-    assert len(data["data"]) > 0
-    assert "PLAYER_LAST_NAME" in data["data"][0]
-    assert "page" in data and "limit" in data and "total" in data and "has_more" in data
+    assert isinstance(data, list)
+    assert len(data) > 0
+    assert "PLAYER_LAST_NAME" in data[0]
 
 
 # ============================================================================
@@ -454,12 +452,10 @@ def test_get_standings_success(mock_get_standings):
     response = client.get("/api/v1/standings/season/2024-25")
     assert response.status_code == 200
     data = response.json()
-    assert "data" in data
-    assert isinstance(data["data"], list)
-    assert len(data["data"]) > 0
-    assert data["data"][0]["wins"] >= 0
-    assert data["data"][0]["losses"] >= 0
-    assert "page" in data and "limit" in data and "total" in data and "has_more" in data
+    assert isinstance(data, list)
+    assert len(data) > 0
+    assert data[0]["wins"] >= 0
+    assert data[0]["losses"] >= 0
 
 
 # ============================================================================
@@ -523,10 +519,16 @@ def test_search_missing_query_parameter():
     assert response.status_code == 422  # Validation error
 
 
-def test_search_empty_query_parameter():
-    """Test search endpoint rejects empty query."""
+@patch("app.routers.search.search_entities")
+def test_search_empty_query_parameter(mock_search):
+    """Empty query is accepted at FastAPI; Spring validates non-empty at the edge."""
+    async def mock_search_async(*args, **kwargs):
+        return {"players": [], "teams": []}
+
+    mock_search.side_effect = mock_search_async
+
     response = client.get("/api/v1/search?q=")
-    assert response.status_code == 422  # Validation error (min_length=1)
+    assert response.status_code == 200
 
 
 # ============================================================================
@@ -664,12 +666,9 @@ def test_standings_schema_validation(mock_get_standings):
     assert response.status_code == 200
     data = response.json()
 
-    # Validate paginated schema structure
-    assert "data" in data
-    assert isinstance(data["data"], list)
-    assert "page" in data and "limit" in data and "total" in data and "has_more" in data
-    if len(data["data"]) > 0:
-        standing = data["data"][0]
+    assert isinstance(data, list)
+    if len(data) > 0:
+        standing = data[0]
         assert "team_id" in standing
         assert "team_name" in standing
         assert "wins" in standing

@@ -1,8 +1,7 @@
 import logging
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 
-from app.schemas.pagination import PaginatedResponse, PaginationParams
 from app.schemas.standings import StandingRecord
 from app.utils.errors import upstream_error
 from app.services.standings import getSeasonStandings
@@ -15,33 +14,19 @@ router = APIRouter()
 # Get standings endpoint
 @router.get(
     "/standings/season/{season}",
-    response_model=PaginatedResponse[StandingRecord],
+    response_model=list[StandingRecord],
     tags=["standings"],
     summary="Get NBA Standings for a Given Season",
-    description="Get the win/loss records and rankings for all teams in a season. Supports pagination.",
+    description="Get the win/loss records and rankings for all teams in a season.",
 )
-async def season_standings(
-    season: str,
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
-):
+async def season_standings(season: str):
     """
     Get the standings (win/loss records) for all teams in a season.
     Shows playoff rankings and team records.
     """
     try:
         resp = await getSeasonStandings(season)
-        params = PaginationParams(page=page, limit=limit)
-        full = resp.standings
-        total = len(full)
-        data = full[params.offset : params.offset + params.limit]
-        return PaginatedResponse(
-            data=data,
-            page=params.page,
-            limit=params.limit,
-            total=total,
-            has_more=params.offset + len(data) < total,
-        )
+        return resp.standings
     except HTTPException as e:
         raise e
     except Exception as e:

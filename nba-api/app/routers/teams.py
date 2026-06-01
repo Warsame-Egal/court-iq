@@ -11,20 +11,13 @@ from app.services.teamplayerstats import get_team_player_stats
 from app.services.teams import get_team
 from app.services.teamstats import get_team_stats
 from app.utils.errors import upstream_error
-from app.utils.season import get_current_season, validate_season
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
 @router.get("/teams/stats", response_model=TeamStatsResponse, tags=["teams"])
-async def get_team_stats_route(
-    season: str = Query(default_factory=get_current_season)
-):
-    try:
-        validate_season(season)
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+async def get_team_stats_route(season: str = Query(...)):
     try:
         return await get_team_stats(season)
     except HTTPException:
@@ -48,14 +41,7 @@ async def fetch_team(team_id: int):
 @router.get(
     "/teams/{team_id}/game-log", response_model=TeamGameLogResponse, tags=["teams"]
 )
-async def get_team_game_log_route(
-    team_id: int,
-    season: str = Query(default_factory=get_current_season)
-):
-    try:
-        validate_season(season)
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+async def get_team_game_log_route(team_id: int, season: str = Query(...)):
     try:
         return await get_team_game_log(str(team_id), season)
     except HTTPException:
@@ -70,14 +56,7 @@ async def get_team_game_log_route(
     response_model=TeamPlayerStatsResponse,
     tags=["teams"],
 )
-async def get_team_player_stats_route(
-    team_id: int,
-    season: str = Query(default_factory=get_current_season)
-):
-    try:
-        validate_season(season)
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+async def get_team_player_stats_route(team_id: int, season: str = Query(...)):
     try:
         return await get_team_player_stats(team_id, season)
     except HTTPException:

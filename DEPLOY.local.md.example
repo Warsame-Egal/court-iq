@@ -18,7 +18,7 @@ Copy once: `cp DEPLOY.local.md.example DEPLOY.local.md`
 
 ```bash
 gcloud compute firewall-rules create courtiq-api \
-  --allow=tcp:8080,tcp:8000 \
+  --allow=tcp:8080 \
   --target-tags=courtiq
 ```
 
@@ -56,7 +56,7 @@ Check (~2 min on e2-micro):
 
 ```bash
 curl -s http://localhost:8080/actuator/health
-curl -s http://localhost:8000/api/v1/health
+docker compose -f docker-compose.prod.yml exec fastapi curl -s http://localhost:8000/api/v1/health
 ```
 
 ---
@@ -65,27 +65,24 @@ curl -s http://localhost:8000/api/v1/health
 
 Install [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) on the VM.
 
-**Start both tunnels** (survives SSH logout):
+**Start Spring tunnel** (survives SSH logout). FastAPI is internal-only — no public tunnel.
 
 ```bash
 pkill cloudflared 2>/dev/null || true
 
 nohup cloudflared tunnel --url http://localhost:8080 > ~/cf-spring.log 2>&1 &
-nohup cloudflared tunnel --url http://localhost:8000 > ~/cf-fastapi.log 2>&1 &
 ```
 
-**Get URLs** (~10 sec):
+**Get URL** (~10 sec):
 
 ```bash
-grep -o 'https://[^ ]*trycloudflare.com' ~/cf-spring.log    # Spring → .env + Vercel API
-grep -o 'https://[^ ]*trycloudflare.com' ~/cf-fastapi.log   # FastAPI → Vercel WS host only
-pgrep -a cloudflared   # should show 2 processes
+grep -o 'https://[^ ]*trycloudflare.com' ~/cf-spring.log    # Spring → .env + Vercel API + WS
+pgrep -a cloudflared
 ```
 
 | Tunnel | Port | Goes where |
 |--------|------|------------|
-| `cf-spring.log` | 8080 | VM `.env` → `SERVER_URL` (full `https://…`) |
-| `cf-fastapi.log` | 8000 | Vercel → `VITE_WS_URL` (**hostname only**, no `https://`) |
+| `cf-spring.log` | 8080 | VM `.env` → `SERVER_URL`; Vercel → `VITE_API_BASE_URL` and `VITE_WS_URL` (hostname only for WS) |
 
 **Update VM `.env`:**
 
@@ -96,7 +93,6 @@ nano ~/court-iq/.env
 ```env
 SERVER_URL=https://YOUR-SPRING-TUNNEL.trycloudflare.com
 CORS_ALLOWED_ORIGINS=https://court-iq-alpha.vercel.app
-ALLOWED_ORIGINS=https://court-iq-alpha.vercel.app
 NBA_API_PROXY=http://USER:PASS@HOST:PORT
 ```
 
@@ -123,7 +119,7 @@ curl.exe "https://YOUR-SPRING-TUNNEL.trycloudflare.com/actuator/health"
 | Name | Value |
 |------|--------|
 | `VITE_API_BASE_URL` | Same as `SERVER_URL` |
-| `VITE_WS_URL` | FastAPI tunnel hostname only (e.g. `something.trycloudflare.com`) |
+| `VITE_WS_URL` | Same tunnel hostname as API (e.g. `something.trycloudflare.com`, no `https://`) |
 
 3. Deploy → https://court-iq-alpha.vercel.app
 

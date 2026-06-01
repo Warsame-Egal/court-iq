@@ -57,10 +57,11 @@ public class PlayerController {
     @GetMapping("/player/{playerId}/game-log")
     public Mono<String> getGameLog(
             @Parameter(description = "NBA player ID", example = "2544") @PathVariable String playerId,
-            @Parameter(description = "Query params forwarded to FastAPI", example = "season=2023-24")
-                    @RequestParam
-                    MultiValueMap<String, String> params) {
-        return playerService.getGameLog(playerId, params);
+            @Parameter(description = "NBA season", example = "2023-24")
+                    @RequestParam(required = false)
+                    @Pattern(regexp = "\\d{4}-\\d{2}", message = "Season must be YYYY-YY")
+                    String season) {
+        return playerService.getGameLog(playerId, season);
     }
 
     @Operation(
@@ -108,10 +109,11 @@ public class PlayerController {
                     @Min(1)
                     @Max(100)
                     int pageSize,
-            @Parameter(description = "Query params forwarded to FastAPI", example = "season=2023-24")
+            @Parameter(description = "NBA season", example = "2023-24")
                     @RequestParam(required = false)
-                    MultiValueMap<String, String> params) {
-        return playerService.getSeasonLeaders(page, pageSize, params);
+                    @Pattern(regexp = "\\d{4}-\\d{2}", message = "Season must be YYYY-YY")
+                    String season) {
+        return playerService.getSeasonLeaders(page, pageSize, season);
     }
 
     @Operation(
