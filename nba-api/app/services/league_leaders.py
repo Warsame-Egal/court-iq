@@ -26,7 +26,7 @@ async def get_league_leaders(
 
     Fetches league leaders from NBA API using the LeagueLeaders endpoint.
     Returns top players sorted by the specified stat (points, rebounds, assists, steals, or blocks).
-    Results are cached for 5 minutes to reduce API calls and manage rate limits.
+    Rate-limited to respect nba_api; not cached here (Spring caches league leaders).
 
     This service is used by the League Leaders Dashboard in the frontend to display
     top performers across different stat categories.

@@ -6,7 +6,7 @@ if [ -f /app/patch_scoreboard.py ]; then
     python3 /app/patch_scoreboard.py || echo "Warning: scoreboard patch failed"
 fi
 
-if { [ -n "$NBA_API_CONFIG" ] || [ -n "$NBA_API_PROXY" ]; } && [ -f /app/patch_http.py ]; then
+if [ -n "$NBA_API_PROXY" ] && [ -f /app/patch_http.py ]; then
     python3 /app/patch_http.py || echo "Warning: http proxy patch failed"
 fi
 

@@ -106,10 +106,10 @@ def patch_http_file(http_file_path: Path, proxy_list: list):
 
 def main():
     """Main function."""
-    proxy_env = os.getenv("NBA_API_CONFIG", os.getenv("NBA_API_PROXY", ""))
+    proxy_env = os.getenv("NBA_API_PROXY", "")
 
     if not proxy_env:
-        print("NBA_API_PROXY/NBA_API_CONFIG not set. Skipping patch.")
+        print("NBA_API_PROXY not set. Skipping patch.")
         return
 
     proxy_list = [p.strip() for p in proxy_env.split(",") if p.strip()]

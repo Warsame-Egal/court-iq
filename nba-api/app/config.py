@@ -26,7 +26,7 @@ class ApiConfig:
 
     def __init__(self):
         """Initialize configuration from environment variables."""
-        config_env = os.getenv("NBA_API_CONFIG", os.getenv("NBA_API_PROXY", ""))
+        config_env = os.getenv("NBA_API_PROXY", "")
 
         if config_env:
             self.config_list = [p.strip() for p in config_env.split(",") if p.strip()]

@@ -14,7 +14,7 @@ Full numbered runbook: copy [`DEPLOY.local.md.example`](DEPLOY.local.md.example)
 4. Vercel: `frontend/`, set `VITE_API_BASE_URL` + `VITE_WS_URL` to the Spring tunnel URL
 5. GitHub Actions secrets: `VM_HOST`, `VM_USER`, `VM_SSH_KEY` (see example doc §5)
 
-Do **not** set `FASTAPI_BASE_URL` in prod `.env` — Spring uses `http://fastapi:8000` inside Docker.
+Do **not** set `FASTAPI_BASE_URL` in prod `.env` — `docker-compose.prod.yml` sets `http://fastapi:8000` for Spring.
 
 ## Deploy on push
 

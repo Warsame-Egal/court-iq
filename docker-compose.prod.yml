@@ -2,6 +2,8 @@
 # Usage: cp .env.example .env  # edit for production, then:
 #        docker compose -f docker-compose.prod.yml up -d --build
 
+name: nba-scoreboard
+
 services:
   fastapi:
     build: ./nba-api
@@ -27,6 +29,7 @@ services:
     env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      FASTAPI_BASE_URL: http://fastapi:8000
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       SERVER_URL: ${SERVER_URL}
       # e2-micro (1 GB): cap JVM heap so FastAPI + OS are not OOM-killed

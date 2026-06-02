@@ -215,7 +215,7 @@ async def fetch_nba_scoreboard():
         if attempt < 3:
             await asyncio.sleep(2)
     logger.error(
-        "Scoreboard fetch failed after 3 attempts. Last error: %s. Cache will not update.",
+        "Scoreboard fetch failed after 3 attempts. Last error: %s.",
         last_error,
     )
     return {}

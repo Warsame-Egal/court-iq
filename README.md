@@ -2,13 +2,13 @@
 
 [![CI](https://github.com/Warsame-Egal/nba-scoreboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Warsame-Egal/nba-scoreboard/actions/workflows/ci.yml)
 
-Live NBA scores, stats, and standings.
+NBA live scores, standings, schedules, and player/team stats.
 
 **React → Spring Boot → FastAPI → [`nba_api`](https://github.com/swar/nba_api)**
 
-The React app calls Spring Boot on port 8080. Spring Boot proxies requests to the FastAPI service, which fetches data from [swar/nba_api](https://github.com/swar/nba_api). No database.
+The React app talks only to the Spring service, which handles validation, pagination, caching, error handling, and the live WebSockets. Spring calls the FastAPI service for data; FastAPI wraps [swar/nba_api](https://github.com/swar/nba_api) and returns plain JSON. No database.
 
-## Docker
+## Run with Docker
 
 ```bash
 git clone https://github.com/Warsame-Egal/nba-scoreboard.git
@@ -21,44 +21,26 @@ docker compose up --build
 |--|-----|
 | App | http://localhost:3000 |
 | Spring + Swagger | http://localhost:8080/swagger-ui.html |
-| Spring health | http://localhost:8080/actuator/health |
+| FastAPI docs | http://localhost:8000/docs |
 
-Stop / rebuild: `docker compose down` · `docker compose up --build`
+## Run locally (no Docker)
 
-Deploy overview: [`DEPLOY.md`](DEPLOY.md). Full runbook: [`DEPLOY.local.md.example`](DEPLOY.local.md.example) (copy to `DEPLOY.local.md`, gitignored).
-
-## Spring Boot
-
-From repo root:
+Spring (repo root):
 
 ```bash
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
-Windows: `mvnw.cmd spring-boot:run`
-
-- Swagger: http://localhost:8080/swagger-ui.html
-- Live WebSockets: `ws://localhost:8080/api/v1/ws` and `ws://localhost:8080/api/v1/ws/{gameId}/play-by-play`
-
-## FastAPI
+FastAPI:
 
 ```bash
 cd nba-api
-python -m venv venv
-```
-
-**Bash:** `source venv/bin/activate`  
-**PowerShell:** `.\venv\Scripts\Activate.ps1`
-
-```bash
+python -m venv venv && source venv/bin/activate   # PowerShell: .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-- Docs: http://localhost:8000/docs
-- Routes: [`nba-api/API.md`](nba-api/API.md)
-
-## React
+React:
 
 ```bash
 cd frontend
@@ -66,16 +48,13 @@ npm install
 npm run dev
 ```
 
-http://localhost:3000 — proxies `/api` to Spring when `VITE_API_BASE_URL` is unset.
-
 ## Config
 
-Copy [`.env.example`](.env.example). Main vars: `FASTAPI_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `VITE_API_BASE_URL`, `VITE_WS_URL` (Spring host, same as REST).
+Copy `.env.example`. Key vars: `FASTAPI_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `VITE_API_BASE_URL`, `VITE_WS_URL`.
 
-## License
-
-[MIT](LICENSE)
+- Endpoints: [`nba-api/API.md`](nba-api/API.md)
+- Deploy: [`DEPLOY.md`](DEPLOY.md)
 
 ## Credits
 
-Data from [swar/nba_api](https://github.com/swar/nba_api). Not affiliated with NBA.com or that project.
+Data via [swar/nba_api](https://github.com/swar/nba_api). Not affiliated with the NBA or that project.

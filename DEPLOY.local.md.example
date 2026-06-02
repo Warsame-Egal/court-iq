@@ -196,16 +196,14 @@ Optional manual deploy on VM: `bash ~/nba-scoreboard/scripts/deploy.sh`
 
 ---
 
-# WHEN TUNNELS RESTART (VM reboot, `pkill`, etc.)
+# WHEN TUNNEL RESTARTS (VM reboot, `pkill`, etc.)
 
-Quick tunnels get **new URLs** each time. Same `nohup` commands:
+Quick tunnels get **new URLs** each time:
 
 ```bash
 pkill cloudflared 2>/dev/null || true
 nohup cloudflared tunnel --url http://localhost:8080 > ~/cf-spring.log 2>&1 &
-nohup cloudflared tunnel --url http://localhost:8000 > ~/cf-fastapi.log 2>&1 &
 grep -o 'https://[^ ]*trycloudflare.com' ~/cf-spring.log
-grep -o 'https://[^ ]*trycloudflare.com' ~/cf-fastapi.log
 ```
 
 1. Update `SERVER_URL` in `~/nba-scoreboard/.env`
@@ -213,7 +211,7 @@ grep -o 'https://[^ ]*trycloudflare.com' ~/cf-fastapi.log
 3. Vercel → update `VITE_API_BASE_URL` + `VITE_WS_URL` → **Redeploy**
 4. Update the table below in `DEPLOY.local.md`
 
-**Logs:** `tail -f ~/cf-spring.log` · **Stop tunnels:** `pkill cloudflared`
+**Logs:** `tail -f ~/cf-spring.log` · **Stop tunnel:** `pkill cloudflared`
 
 ---
 
@@ -224,7 +222,7 @@ grep -o 'https://[^ ]*trycloudflare.com' ~/cf-fastapi.log
 | VM IP (`VM_HOST`) | |
 | VM user (`VM_USER`) | |
 | Spring tunnel (`SERVER_URL` / `VITE_API_BASE_URL`) | `https://` |
-| FastAPI WS host (`VITE_WS_URL`, no https) | |
+| WebSocket host (`VITE_WS_URL`, no https) | |
 | Vercel app | `https://nba-scoreboard-alpha.vercel.app` |
 
 ---
@@ -233,8 +231,8 @@ grep -o 'https://[^ ]*trycloudflare.com' ~/cf-fastapi.log
 
 | Check | Command |
 |-------|---------|
-| Tunnels running | `pgrep -a cloudflared` (2 lines) |
+| Tunnel running | `pgrep -a cloudflared` |
 | Spring on VM | `curl -s http://localhost:8080/actuator/health` |
-| FastAPI on VM | `curl -s http://localhost:8000/api/v1/health` |
+| FastAPI on VM (internal) | `docker compose -f docker-compose.prod.yml exec fastapi curl -s http://localhost:8000/api/v1/health` |
 | Spring via tunnel | `curl.exe https://YOUR-SPRING-TUNNEL.../actuator/health` (Windows) |
 | GitHub deploy | Actions → CI → **deploy** step green |

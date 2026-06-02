@@ -1,3 +1,5 @@
+name: nba-scoreboard
+
 services:
   fastapi:
     build: ./nba-api
@@ -6,8 +8,6 @@ services:
       - "8000:8000"
     environment:
       - NBA_API_PROXY=${NBA_API_PROXY:-}
-      - NBA_API_CONFIG=${NBA_API_CONFIG:-}
-      - ALLOWED_ORIGINS=http://springboot:8080
     networks:
       - nba-scoreboard-network
     healthcheck:
@@ -22,8 +22,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - FASTAPI_BASE_URL=fastapi:8000
+      - SPRING_PROFILES_ACTIVE=dev
+      - FASTAPI_BASE_URL=http://fastapi:8000
       - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000
     depends_on:
       fastapi:
