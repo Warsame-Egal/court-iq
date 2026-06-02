@@ -49,7 +49,7 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-      - run: mvn -B test
+      - run: ./mvnw -B test
 
   deploy:
     needs: [backend, frontend, java]
@@ -85,4 +85,4 @@ jobs:
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             "${VM_USER}@${VM_HOST}" \
-            'cd ~/court-iq && git fetch origin main && git reset --hard origin/main && bash scripts/deploy.sh'
+            'cd ~/nba-scoreboard && git fetch origin main && git reset --hard origin/main && bash scripts/deploy.sh'

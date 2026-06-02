@@ -1,24 +1,18 @@
-# CourtIQ
+# NBA Scoreboard
 
-[![CI](https://github.com/Warsame-Egal/court-iq/actions/workflows/ci.yml/badge.svg)](https://github.com/Warsame-Egal/court-iq/actions/workflows/ci.yml)
+[![CI](https://github.com/Warsame-Egal/nba-scoreboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Warsame-Egal/nba-scoreboard/actions/workflows/ci.yml)
 
-NBA live scores, stats, and standings. **React → Spring → FastAPI → [`nba_api`](https://github.com/swar/nba_api)**
+Live NBA scores, stats, and standings.
 
-![Demo](docs/demo.gif)
+**React → Spring Boot → FastAPI → [`nba_api`](https://github.com/swar/nba_api)**
 
-## Architecture
-
-**FastAPI** is the internal `nba_api` data wrapper (not public). It returns plain JSON from [swar/nba_api](https://github.com/swar/nba_api) on each request — no pagination, validation defaults, CORS, or WebSockets.
-
-**Spring Boot** is the sole public API gateway: validation, pagination (`{data, page, pageSize, total}`), season defaults, caching, error contract, CORS, and WebSocket fan-out for live scoreboard and play-by-play.
-
-**React** talks only to Spring (`:8080`). Spring calls FastAPI over the internal network (`http://fastapi:8000` in Docker). No database.
+The React app calls Spring Boot on port 8080. Spring Boot proxies requests to the FastAPI service, which fetches data from [swar/nba_api](https://github.com/swar/nba_api). No database.
 
 ## Docker
 
 ```bash
-git clone https://github.com/Warsame-Egal/court-iq.git
-cd court-iq
+git clone https://github.com/Warsame-Egal/nba-scoreboard.git
+cd nba-scoreboard
 cp .env.example .env
 docker compose up --build
 ```
@@ -28,23 +22,23 @@ docker compose up --build
 | App | http://localhost:3000 |
 | Spring + Swagger | http://localhost:8080/swagger-ui.html |
 | Spring health | http://localhost:8080/actuator/health |
-| FastAPI docs | http://localhost:8000/docs |
-| FastAPI health | http://localhost:8000/api/v1/health |
 
 Stop / rebuild: `docker compose down` · `docker compose up --build`
 
-Production: [`DEPLOY.md`](DEPLOY.md)
+Deploy overview: [`DEPLOY.md`](DEPLOY.md). Full runbook: [`DEPLOY.local.md.example`](DEPLOY.local.md.example) (copy to `DEPLOY.local.md`, gitignored).
 
-## Spring API
+## Spring Boot
 
 From repo root:
 
 ```bash
-mvn spring-boot:run
+./mvnw spring-boot:run
 ```
 
+Windows: `mvnw.cmd spring-boot:run`
+
 - Swagger: http://localhost:8080/swagger-ui.html
-- Lists return `{ "data", "page", "pageSize", "total" }`
+- Live WebSockets: `ws://localhost:8080/api/v1/ws` and `ws://localhost:8080/api/v1/ws/{gameId}/play-by-play`
 
 ## FastAPI
 
@@ -77,6 +71,10 @@ http://localhost:3000 — proxies `/api` to Spring when `VITE_API_BASE_URL` is u
 ## Config
 
 Copy [`.env.example`](.env.example). Main vars: `FASTAPI_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `VITE_API_BASE_URL`, `VITE_WS_URL` (Spring host, same as REST).
+
+## License
+
+[MIT](LICENSE)
 
 ## Credits
 

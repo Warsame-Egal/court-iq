@@ -37,7 +37,7 @@ env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
 
 app = FastAPI(
-    title="CourtIQ NBA API",
+    title="NBA Scoreboard — data service",
     description=(
         "Internal NBA data service. Wraps swar/nba_api (https://github.com/swar/nba_api) "
         "with rate limiting and proxy support. Spring Boot is the public API gateway."
@@ -48,7 +48,7 @@ app = FastAPI(
 
 @app.get("/")
 def home():
-    return {"message": "CourtIQ NBA API is running"}
+    return {"message": "ok"}
 
 
 app.include_router(scoreboard_router, prefix="/api/v1")

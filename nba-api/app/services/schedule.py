@@ -1,7 +1,6 @@
 import asyncio
 import logging
-import time
-from typing import Dict, Optional
+from typing import Optional
 
 from fastapi import HTTPException
 from nba_api.stats.endpoints import scoreboardv2

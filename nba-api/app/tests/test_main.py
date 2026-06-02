@@ -16,7 +16,7 @@ def test_home_endpoint():
     """Test the root health check endpoint."""
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "CourtIQ NBA API is running"}
+    assert response.json() == {"message": "ok"}
 
 
 # ============================================================================

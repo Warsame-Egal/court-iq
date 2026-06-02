@@ -1,6 +1,6 @@
-# CourtIQ FastAPI — internal data service
+# NBA Scoreboard — data service
 
-FastAPI wrapper around [`swar/nba_api`](https://github.com/swar/nba_api). No database. **Spring Boot** is the public gateway (REST, pagination, validation, WebSockets, CORS). This service returns plain JSON from `nba_api` on request/response only.
+Wraps [`swar/nba_api`](https://github.com/swar/nba_api) and returns plain JSON. Spring Boot is the public entry point for the app.
 
 Base URL (local dev, internal): `http://localhost:8000`
 

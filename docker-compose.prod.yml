@@ -5,13 +5,13 @@
 services:
   fastapi:
     build: ./nba-api
-    container_name: courtiq-data
+    container_name: nba-scoreboard-data
     restart: unless-stopped
     env_file: .env
     environment:
       NBA_API_PROXY: ${NBA_API_PROXY:-}
     networks:
-      - courtiq-network
+      - nba-scoreboard-network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/health || exit 1"]
       interval: 10s
@@ -20,7 +20,7 @@ services:
 
   springboot:
     build: .
-    container_name: courtiq-api
+    container_name: nba-scoreboard-api
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -35,7 +35,7 @@ services:
       fastapi:
         condition: service_healthy
     networks:
-      - courtiq-network
+      - nba-scoreboard-network
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
       interval: 15s
@@ -44,5 +44,5 @@ services:
       start_period: 120s
 
 networks:
-  courtiq-network:
+  nba-scoreboard-network:
     driver: bridge

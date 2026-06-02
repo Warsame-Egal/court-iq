@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import time
 from datetime import date
 from typing import List, Dict, Optional
 
@@ -31,7 +30,6 @@ from app.schemas.scoreboard import (
 from app.config import get_api_kwargs
 from app.constants import (
     GAME_STATUS_FINAL,
-    GAME_STATUS_LIVE,
     GAME_STATUS_SCHEDULED,
 )
 from app.utils.rate_limiter import rate_limit

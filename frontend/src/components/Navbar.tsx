@@ -72,7 +72,7 @@ export default function Navbar() {
             transition: 'all 0.2s ease',
           }}
         >
-          CourtIQ
+          NBA Scoreboard
         </Typography>
 
         {/* Desktop: Scores, Explore */}

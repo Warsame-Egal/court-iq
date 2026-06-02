@@ -1,4 +1,4 @@
-# CourtIQ — production runbook
+# NBA Scoreboard — production runbook
 
 Copy once: `cp DEPLOY.local.md.example DEPLOY.local.md`  
 `DEPLOY.local.md` is gitignored (your URLs stay private).
@@ -10,16 +10,16 @@ Copy once: `cp DEPLOY.local.md.example DEPLOY.local.md`
 ## 1. GCP VM
 
 1. [GCP Console](https://console.cloud.google.com/) → Compute Engine → **Create instance**
-2. **Name:** `courtiq-instance` · **Machine:** e2-micro · **Region:** `us-central1`
+2. **Name:** `nba-scoreboard-instance` · **Machine:** e2-micro · **Region:** `us-central1`
 3. **Boot disk:** Ubuntu 22.04, 30 GB
-4. **Network tags:** `courtiq` → Create
+4. **Network tags:** `nba-scoreboard` → Create
 
 **Firewall** (once):
 
 ```bash
-gcloud compute firewall-rules create courtiq-api \
+gcloud compute firewall-rules create nba-scoreboard-api \
   --allow=tcp:8080 \
-  --target-tags=courtiq
+  --target-tags=nba-scoreboard
 ```
 
 **VM external IP** → GCP → VM instances → **External IP** (for SSH + GitHub `VM_HOST`).
@@ -41,8 +41,8 @@ sudo mkswap /swapfile && sudo swapon /swapfile
 sudo usermod -aG docker "$USER"
 # log out and SSH back in
 
-git clone https://github.com/Warsame-Egal/court-iq.git
-cd court-iq
+git clone https://github.com/Warsame-Egal/nba-scoreboard.git
+cd nba-scoreboard
 cp .env.production.example .env
 ```
 
@@ -87,19 +87,19 @@ pgrep -a cloudflared
 **Update VM `.env`:**
 
 ```bash
-nano ~/court-iq/.env
+nano ~/nba-scoreboard/.env
 ```
 
 ```env
 SERVER_URL=https://YOUR-SPRING-TUNNEL.trycloudflare.com
-CORS_ALLOWED_ORIGINS=https://court-iq-alpha.vercel.app
+CORS_ALLOWED_ORIGINS=https://nba-scoreboard-alpha.vercel.app
 NBA_API_PROXY=http://USER:PASS@HOST:PORT
 ```
 
 No `FASTAPI_BASE_URL` line.
 
 ```bash
-cd ~/court-iq
+cd ~/nba-scoreboard
 docker compose -f docker-compose.prod.yml up -d springboot
 ```
 
@@ -121,7 +121,7 @@ curl.exe "https://YOUR-SPRING-TUNNEL.trycloudflare.com/actuator/health"
 | `VITE_API_BASE_URL` | Same as `SERVER_URL` |
 | `VITE_WS_URL` | Same tunnel hostname as API (e.g. `something.trycloudflare.com`, no `https://`) |
 
-3. Deploy → https://court-iq-alpha.vercel.app
+3. Deploy → https://nba-scoreboard-alpha.vercel.app
 
 ---
 
@@ -132,13 +132,13 @@ Repo → **Settings → Secrets and variables → Actions → Repository secrets
 ### A. Create deploy key (any folder in CMD)
 
 ```cmd
-ssh-keygen -t ed25519 -f C:\Users\Warsa\courtiq-deploy -N ""
+ssh-keygen -t ed25519 -f C:\Users\Warsa\nba-scoreboard-deploy -N ""
 ```
 
 ### B. Public key → VM
 
 ```cmd
-type C:\Users\Warsa\courtiq-deploy.pub
+type C:\Users\Warsa\nba-scoreboard-deploy.pub
 ```
 
 Copy the one line → on VM:
@@ -155,13 +155,13 @@ chmod 600 ~/.ssh/authorized_keys
 |-------------|------------------|---------|
 | `VM_HOST` | GCP → VM **External IP** or on VM: `curl -s ifconfig.me` | `35.238.67.7` |
 | `VM_USER` | On VM: `whoami` or name before `@` when you SSH | `warsameegal0` |
-| `VM_SSH_KEY` | **Private** key — CMD: `notepad C:\Users\Warsa\courtiq-deploy` → Ctrl+A, Ctrl+C. Must include `-----BEGIN` through `-----END`. **Not** the `.pub` file. | (multiline key) |
+| `VM_SSH_KEY` | **Private** key — CMD: `notepad C:\Users\Warsa\nba-scoreboard-deploy` → Ctrl+A, Ctrl+C. Must include `-----BEGIN` through `-----END`. **Not** the `.pub` file. | (multiline key) |
 
 **Verify key file (CMD):**
 
 ```cmd
-ssh-keygen -y -f C:\Users\Warsa\courtiq-deploy
-type C:\Users\Warsa\courtiq-deploy.pub
+ssh-keygen -y -f C:\Users\Warsa\nba-scoreboard-deploy
+type C:\Users\Warsa\nba-scoreboard-deploy.pub
 ```
 
 First command should print `ssh-ed25519 …`. Second is **public only** (for VM, not GitHub).
@@ -169,7 +169,7 @@ First command should print `ssh-ed25519 …`. Second is **public only** (for VM,
 **Test SSH (CMD):**
 
 ```cmd
-ssh -i C:\Users\Warsa\courtiq-deploy warsameegal0@35.238.67.7 "echo ok"
+ssh -i C:\Users\Warsa\nba-scoreboard-deploy warsameegal0@35.238.67.7 "echo ok"
 ```
 
 Must print `ok`. Then **Actions → CI → Re-run** or push to `main`.
@@ -192,7 +192,7 @@ git push
 | **GCP VM** | CI tests pass → SSH runs `scripts/deploy.sh` when backend files changed |
 | **You** | Nothing else unless tunnels died or you changed `.env` |
 
-Optional manual deploy on VM: `bash ~/court-iq/scripts/deploy.sh`
+Optional manual deploy on VM: `bash ~/nba-scoreboard/scripts/deploy.sh`
 
 ---
 
@@ -208,7 +208,7 @@ grep -o 'https://[^ ]*trycloudflare.com' ~/cf-spring.log
 grep -o 'https://[^ ]*trycloudflare.com' ~/cf-fastapi.log
 ```
 
-1. Update `SERVER_URL` in `~/court-iq/.env`
+1. Update `SERVER_URL` in `~/nba-scoreboard/.env`
 2. `docker compose -f docker-compose.prod.yml up -d springboot`
 3. Vercel → update `VITE_API_BASE_URL` + `VITE_WS_URL` → **Redeploy**
 4. Update the table below in `DEPLOY.local.md`
@@ -225,7 +225,7 @@ grep -o 'https://[^ ]*trycloudflare.com' ~/cf-fastapi.log
 | VM user (`VM_USER`) | |
 | Spring tunnel (`SERVER_URL` / `VITE_API_BASE_URL`) | `https://` |
 | FastAPI WS host (`VITE_WS_URL`, no https) | |
-| Vercel app | `https://court-iq-alpha.vercel.app` |
+| Vercel app | `https://nba-scoreboard-alpha.vercel.app` |
 
 ---
 

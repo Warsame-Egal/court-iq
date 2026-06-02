@@ -1,7 +1,7 @@
 services:
   fastapi:
     build: ./nba-api
-    container_name: courtiq-data
+    container_name: nba-scoreboard-data
     ports:
       - "8000:8000"
     environment:
@@ -9,7 +9,7 @@ services:
       - NBA_API_CONFIG=${NBA_API_CONFIG:-}
       - ALLOWED_ORIGINS=http://springboot:8080
     networks:
-      - courtiq-network
+      - nba-scoreboard-network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/health || exit 1"]
       interval: 10s
@@ -18,7 +18,7 @@ services:
 
   springboot:
     build: .
-    container_name: courtiq-api
+    container_name: nba-scoreboard-api
     ports:
       - "8080:8080"
     environment:
@@ -29,7 +29,7 @@ services:
       fastapi:
         condition: service_healthy
     networks:
-      - courtiq-network
+      - nba-scoreboard-network
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
       interval: 15s
@@ -43,15 +43,15 @@ services:
       args:
         VITE_API_BASE_URL: http://localhost:8080
         VITE_WS_URL: localhost:8080
-    container_name: courtiq-frontend
+    container_name: nba-scoreboard-frontend
     ports:
       - "3000:3000"
     depends_on:
       springboot:
         condition: service_healthy
     networks:
-      - courtiq-network
+      - nba-scoreboard-network
 
 networks:
-  courtiq-network:
+  nba-scoreboard-network:
     driver: bridge
