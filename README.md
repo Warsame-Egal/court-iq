@@ -53,7 +53,6 @@ npm run dev
 Copy `.env.example`. Key vars: `FASTAPI_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `VITE_API_BASE_URL`, `VITE_WS_URL`.
 
 - Endpoints: [`nba-api/API.md`](nba-api/API.md)
-- Deploy: [`DEPLOY.md`](DEPLOY.md)
 
 ## Credits
 

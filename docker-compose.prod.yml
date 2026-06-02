@@ -1,4 +1,4 @@
-# Production backend only (GCP VM, etc.). Frontend deploys separately (e.g. Vercel).
+# Production backend only. Frontend deploys separately.
 # Usage: cp .env.example .env  # edit for production, then:
 #        docker compose -f docker-compose.prod.yml up -d --build
 

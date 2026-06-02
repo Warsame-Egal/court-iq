@@ -70,7 +70,7 @@ jobs:
               - 'pom.xml'
               - 'scripts/**'
               - '.github/workflows/**'
-      - name: Deploy backend to GCP VM
+      - name: Deploy backend
         if: steps.changes.outputs.backend == 'true'
         uses: webfactory/ssh-agent@v0.9.0
         with:

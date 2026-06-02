@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run on the GCP VM (manually or via GitHub Actions SSH).
+# Run on the production host (manually or via GitHub Actions SSH).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
